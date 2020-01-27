@@ -8,6 +8,10 @@ import (
 	"time"
 
 	"github.com/gen2brain/beeep"
+	"github.com/olebedev/when"
+	"github.com/olebedev/when/rules/common"
+	"github.com/olebedev/when/rules/en"
+	"github.com/olebedev/when/rules/ru"
 )
 
 const (
@@ -23,18 +27,27 @@ func main() {
 
 	now := time.Now()
 
-	t, err := time.Parse("2006-01-02 MST 15:04", now.Format("2006-01-02 MST ")+os.Args[1])
+	w := when.New(nil)
+	w.Add(en.All...)
+	w.Add(ru.All...)
+	w.Add(common.All...)
+
+	t, err := w.Parse(os.Args[1], now)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	if t == nil {
+		fmt.Println("Unable to parse time!")
+		os.Exit(2)
+	}
 
-	if now.After(t) {
+	if now.After(t.Time) {
 		fmt.Println("Set a future time!")
 		os.Exit(3)
 	}
 
-	diff := t.Sub(now)
+	diff := t.Time.Sub(now)
 
 	if os.Getenv(markName) == markValue {
 		time.Sleep(diff)
@@ -53,7 +66,7 @@ func main() {
 			os.Exit(5)
 		}
 
-		fmt.Println("Reminder will be displayed after", diff.Truncate(time.Second))
+		fmt.Println("Reminder will be displayed after", diff.Round(time.Second))
 		os.Exit(0)
 	}
 }
